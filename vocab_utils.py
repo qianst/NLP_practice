@@ -1,17 +1,24 @@
 '''Functions to preprocess the texts for NLP'''
 
+import re
 
-def generate_vocab(source_file, vocab_file=None):
-    '''Generate a vocabulary from source file.
 
-    Each line in the source files is a sentence.
-    All the tokens (including punctuation) in the source file will be sorted by the descent of token frequency.
+def generate_vocab(source_file, tokenizer, vocab_file=None):
+    '''All the tokens (including punctuation) in the source file will be sorted by the descent of token frequency.
+
+    Args:
+        source_file: each line in the source_file is a sentence
+        tokenizer: the tokenize function, we need different for English and Chinese
+        vocab_file: if vocab_file is not None, the vocab will be saved to vocab_file
+
+    Returns:
+        a list of token by frequency descent
 
     '''
     token_dict = {}
     with open(source_file, 'r') as sentences:
         for sentence in sentences:
-            for token in sentence.strip():
+            for token in tokenizer(sentence):
                 if token in token_dict:
                     token_dict[token] += 1
                 else:
@@ -26,6 +33,21 @@ def generate_vocab(source_file, vocab_file=None):
                 f.write('{}\n'.format(token))
 
     return vocabulary
+
+
+def tokenize(sentence):
+    '''Return the tokens of a sentence including punctuation, for languages like English
+
+    >>> tokenize("It's a test.")
+    ['It', "'", 's', 'a', 'test', '.']
+
+    '''
+    return [token.strip() for token in re.split('(\W+)?', sentence) if token.strip()]
+
+
+def tokenize_cn(sentence):
+    '''Return the tokens of a sentence including punctuation, for languages like Chinese'''
+    return [token for token in sentence.strip()]
 
 
 def load_vocab(vocab_file):
@@ -111,7 +133,7 @@ def unify_sentence_length(sentence_list, uniform_length, padding_symbol='</s>'):
 
     for sentence in sentence_list:
         length = len(sentence)
-        if(length < uniform_length):
+        if length < uniform_length:
             sentence += [padding_symbol] * (uniform_length - length)
         unified_sentence_list.append(sentence)
         original_length_list.append(length)
