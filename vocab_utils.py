@@ -42,7 +42,7 @@ def tokenize(sentence):
     ['It', "'", 's', 'a', 'test', '.']
 
     '''
-    return [token.strip() for token in re.split('(\W+)?', sentence) if token.strip()]
+    return [token.strip() for token in re.split('(\W+)', sentence) if token.strip()]
 
 
 def tokenize_cn(sentence):
