@@ -110,35 +110,43 @@ def add_eos_suffix(sentence_list, eos_suffix='</s>'):
     return [sentence + [eos_suffix] for sentence in sentence_list]
 
 
-def unify_sentence_length(sentence_list, uniform_length, padding_symbol='</s>'):
-    '''Unify all the sentences to the same length
-
-    Truncate the sentence to`uniform_length` if the sentence is longer than `uniform_length`.
-    Padding with padding_symbol if the length of sentence is less than `uniform_length`.
+def unify_sentences(sentence_list, sentence_len, sentence_num=None, padding_symbol='</s>'):
+    '''Truncate or pad all the sentences to the same length, and add dummy sentences if needed
 
     Args:
-        sentence_list: represented with token index of vocab_list
-        uniform_length: the length of each sentence after truncation or padding
-        padding_symbol: default is </s> for most of the case, actually the padding_symbol is irrelevant as we will mask out calculations past the true sequence
+        sentence_list: the list of sentences to unify, each sentence is a string
+        sentence_len: the unified sentence length
+        sentence_num: the total number of sentences after unified, if it is None, keep len(sentence_list) unchanged
+        padding_symbol: default is </s>, means end of sentence
 
     Returns:
-        unified_sentence_list: the sentence list in which the length of each sentence is `uniform_length`
-        original_length_list: the corresponding original sentence length for each sentence in unified_sentence_list
+        unified_sentence_list: the unified sentence_list
+        original_sentence_lens: a list records the corresponding original sentence length for each sentence in unified_sentence_list
+        original_sentence_num: the original number of sentence in the sentence_list before adding dummy sentence
 
     '''
-    sentence_list = [s[:uniform_length] for s in sentence_list]
+    # truncation
+    if sentence_num is not None:
+        sentence_list = sentence_list[-sentence_num:]
+    sentence_list = [s[-sentence_len:] for s in sentence_list]
 
+    # padding
     unified_sentence_list = []
-    original_length_list = []
+    original_sentence_lens = []
+    original_sentence_num = len(sentence_list)
 
     for sentence in sentence_list:
         length = len(sentence)
-        if length < uniform_length:
-            sentence += [padding_symbol] * (uniform_length - length)
+        if length < sentence_len:
+            sentence += [padding_symbol] * (sentence_len - length)
         unified_sentence_list.append(sentence)
-        original_length_list.append(length)
+        original_sentence_lens.append(length)
 
-    return unified_sentence_list, original_length_list
+    if sentence_num is not None and len(sentence_list) < sentence_num:
+        dummy_sentence = [padding_symbol] * sentence_len
+        unified_sentence_list += [dummy_sentence] * (sentence_num - len(sentence_list))
+
+    return unified_sentence_list, original_sentence_lens, original_sentence_num
 
 
 def map_token_to_index(sentences, vocab_dict):
